@@ -1,0 +1,78 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-bg: #0b0c0e;
+  --color-panel: #131619;
+  --color-well: #191d21;
+  --color-line: #262b31;
+  --color-ink: #e8ecef;
+  --color-soft: #a3acb5;
+  --color-mute: #6c7680;
+  --color-accent: #2fd3b4;
+  --color-accent-strong: #5ae6cb;
+  --font-sans: 'Pretendard', 'Inter', system-ui, -apple-system, 'Segoe UI', 'Malgun Gothic', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'Cascadia Code', Consolas, monospace;
+}
+
+html,
+body {
+  background: var(--color-bg);
+  color-scheme: dark;
+}
+
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+.range {
+  --pct: 50%;
+  appearance: none;
+  height: 18px;
+  background: transparent;
+  cursor: pointer;
+}
+.range::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 4px;
+  background: linear-gradient(to right, var(--color-accent) var(--pct), #2c3238 var(--pct));
+}
+.range::-moz-range-track {
+  height: 4px;
+  border-radius: 4px;
+  background: #2c3238;
+}
+.range::-moz-range-progress {
+  height: 4px;
+  border-radius: 4px;
+  background: var(--color-accent);
+}
+.range::-webkit-slider-thumb {
+  appearance: none;
+  margin-top: -6px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #e9fffa;
+  border: 3px solid var(--color-accent);
+  box-shadow: 0 0 0 3px rgb(47 211 180 / 0.15);
+}
+.range::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #e9fffa;
+  border: 3px solid var(--color-accent);
+}
+.range:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.range:focus-visible {
+  outline: 2px solid rgb(47 211 180 / 0.6);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+[data-testid='explore-viewport']:focus-visible {
+  box-shadow: inset 0 0 0 2px rgb(47 211 180 / 0.6);
+}
