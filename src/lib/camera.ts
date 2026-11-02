@@ -6,6 +6,7 @@ export const DEFAULT_CAMERA: CameraSettings = {
   angle: 22,
   targetHeight: 1.25,
   fov: 42,
+  focus: [0, 0],
 }
 
 export const CAMERA_LIMITS = {
@@ -24,7 +25,8 @@ export const CAMERA_PRESETS: Record<CameraPresetKey, { label: string; angle: num
   back: { label: '후면', angle: 180 },
 }
 
-export const SUBJECT_POSITION: Vec3 = [0, 0, 0]
+/** 인물·삼각대·피사체 기준점을 둘 수 있는 바닥 범위 (m) */
+export const STAGE_LIMIT = 6.5
 
 export const toRad = (deg: number) => (deg * Math.PI) / 180
 export const toDeg = (rad: number) => (rad * 180) / Math.PI
@@ -38,11 +40,18 @@ export function wrapAngle(deg: number): number {
 
 export function cameraPosition(c: CameraSettings): Vec3 {
   const a = toRad(c.angle)
-  return [SUBJECT_POSITION[0] + Math.sin(a) * c.distance, c.height, SUBJECT_POSITION[2] + Math.cos(a) * c.distance]
+  return [c.focus[0] + Math.sin(a) * c.distance, c.height, c.focus[1] + Math.cos(a) * c.distance]
 }
 
 export function cameraTarget(c: CameraSettings): Vec3 {
-  return [SUBJECT_POSITION[0], c.targetHeight, SUBJECT_POSITION[2]]
+  return [c.focus[0], c.targetHeight, c.focus[1]]
+}
+
+/** 삼각대를 바닥의 (x, z)로 옮겼을 때의 거리·각도 (높이·시선은 유지) */
+export function cameraFromGround(c: CameraSettings, x: number, z: number): Pick<CameraSettings, 'distance' | 'angle'> {
+  const dx = x - c.focus[0]
+  const dz = z - c.focus[1]
+  return { distance: Math.hypot(dx, dz), angle: Math.round(toDeg(Math.atan2(dx, dz)) * 10) / 10 }
 }
 
 export function clampCamera(c: CameraSettings): CameraSettings {
@@ -53,6 +62,7 @@ export function clampCamera(c: CameraSettings): CameraSettings {
     angle: wrapAngle(c.angle),
     targetHeight: clamp(c.targetHeight, L.targetHeight.min, L.targetHeight.max),
     fov: clamp(c.fov, L.fov.min, L.fov.max),
+    focus: [clamp(c.focus[0], -STAGE_LIMIT, STAGE_LIMIT), clamp(c.focus[1], -STAGE_LIMIT, STAGE_LIMIT)],
   }
 }
 

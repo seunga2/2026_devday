@@ -100,6 +100,52 @@ describe('스토어: CUT 관리', () => {
   })
 })
 
+describe('스토어: 삼각대·인물·배경', () => {
+  it('삼각대를 끌어 옮기면 거리·각도가 바뀌고 높이·시선은 유지', () => {
+    const s = createSceneStore()
+    s.getState().moveCameraTo(0, 3)
+    const c = activeCut(s.getState()).camera
+    expect(c.distance).toBeCloseTo(3)
+    expect(c.angle).toBeCloseTo(0)
+    expect(c.height).toBe(2.1)
+    s.getState().moveCameraTo(0, 0.2) // 최소 거리로 보정
+    expect(activeCut(s.getState()).camera.distance).toBe(1.2)
+  })
+  it('인물 추가·이동·회전·삭제와 피사체 지정', () => {
+    const s = createSceneStore()
+    s.getState().addActor()
+    const cut = activeCut(s.getState())
+    expect(cut.actors).toHaveLength(2)
+    const id = cut.actors[1].id
+    expect(s.getState().selectedActorId).toBe(id)
+    expect(cut.actors[1].x).not.toBe(cut.actors[0].x) // 겹치지 않게 배치
+    s.getState().updateActor(id, { x: 2, z: -1.5, rotation: 190 })
+    expect(activeCut(s.getState()).actors[1]).toMatchObject({ x: 2, z: -1.5, rotation: -170 })
+    s.getState().focusActor(id)
+    expect(activeCut(s.getState()).camera.focus).toEqual([2, -1.5])
+    s.getState().resetCamera()
+    expect(activeCut(s.getState()).camera.focus).toEqual([2, -1.5]) // 초기 구도도 기준점 유지
+    for (let i = 0; i < 10; i++) s.getState().addActor()
+    expect(activeCut(s.getState()).actors).toHaveLength(6)
+    s.getState().selectActor(id)
+    s.getState().removeActor(id)
+    expect(activeCut(s.getState()).actors.some((a) => a.id === id)).toBe(false)
+    expect(s.getState().selectedActorId).toBeNull()
+  })
+  it('배경은 CUT별로 저장되고 새 CUT은 배경·인물 배치를 이어받는다', () => {
+    const s = createSceneStore()
+    s.getState().setEnvironment('outdoor')
+    s.getState().updateActor(activeCut(s.getState()).actors[0].id, { x: 1 })
+    s.getState().addCut()
+    const c2 = activeCut(s.getState())
+    expect(c2.environment).toBe('outdoor')
+    expect(c2.actors[0].x).toBe(1)
+    expect(c2.actors[0].id).not.toBe(s.getState().cuts[0].actors[0].id)
+    s.getState().setEnvironment('indoor')
+    expect(s.getState().cuts[0].environment).toBe('outdoor')
+  })
+})
+
 describe('LocalStorage 자동 저장', () => {
   it('변경 후 debounce 저장, flush 즉시 저장', () => {
     vi.useFakeTimers()

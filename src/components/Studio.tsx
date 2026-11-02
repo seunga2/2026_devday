@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { resetExploreView } from '../scene/Viewports'
 import { viewTargets } from '../scene/views'
-import { useActiveCut } from '../store/store'
+import { useActiveCut, useStore } from '../store/store'
 import { AspectToggle, ShotViewport, useSnapshot } from './PreviewPanel'
-import { Button, Icon, cx } from './ui'
+import { Button, Icon, Segmented, cx } from './ui'
 
 /**
  * 3D 탐색 화면 영역. 실제 렌더링은 Viewports의 공유 Canvas가 이 영역에 그린다.
@@ -13,7 +13,8 @@ export function Studio({ onElement, compact }: { onElement: (el: HTMLDivElement 
   const ref = useRef<HTMLDivElement>(null)
   const [focused, setFocused] = useState(false)
   const [expanded, setExpanded] = useState(false)
-  const aspect = useActiveCut().aspect
+  const { aspect, environment } = useActiveCut()
+  const setEnvironment = useStore((s) => s.setEnvironment)
   const snap = useSnapshot()
 
   useEffect(() => {
@@ -30,7 +31,7 @@ export function Studio({ onElement, compact }: { onElement: (el: HTMLDivElement 
   const miniSize = aspect === '9:16' ? (expanded ? 'h-[85%] aspect-[9/16]' : 'h-full aspect-[9/16]') : 'w-full aspect-video'
 
   return (
-    <div className="relative h-full overflow-hidden rounded-xl border border-line">
+    <div className="relative h-full overflow-hidden rounded-3xl border border-line">
       <div
         ref={ref}
         tabIndex={0}
@@ -43,12 +44,24 @@ export function Studio({ onElement, compact }: { onElement: (el: HTMLDivElement 
       />
       {/* 오버레이 */}
       <div className="pointer-events-none absolute left-3 top-3 flex items-center gap-2">
-        <span className="rounded-md bg-black/55 px-2 py-1 text-[11px] font-semibold tracking-wider text-ink backdrop-blur">3D 스튜디오 · 자유 탐색</span>
-        <span className={cx('rounded-md px-2 py-1 text-[10px] font-semibold', focused ? 'bg-accent/20 text-accent' : 'bg-black/45 text-mute')}>
+        <span className="rounded-full bg-black/55 px-2 py-1 text-[11px] font-semibold tracking-wider text-ink backdrop-blur">3D 스튜디오 · 자유 탐색</span>
+        <span className={cx('rounded-full px-2.5 py-1 text-[10px] font-semibold', focused ? 'bg-accent/20 text-accent' : 'bg-black/45 text-mute')}>
           {focused ? '키보드 이동 활성' : '클릭하면 키보드 이동'}
         </span>
       </div>
-      <div className="absolute right-3 top-3">
+      <div className="absolute right-3 top-3 flex items-center gap-1.5">
+        <div className="w-32 rounded-full bg-black/50 backdrop-blur">
+          <Segmented
+            size="sm"
+            ariaLabel="촬영 공간"
+            value={environment}
+            onChange={setEnvironment}
+            options={[
+              { value: 'indoor', label: '실내' },
+              { value: 'outdoor', label: '실외' },
+            ]}
+          />
+        </div>
         <Button variant="outline" className="bg-black/50 px-2 backdrop-blur" onClick={() => resetExploreView()} title="탐색 시점 초기화">
           <Icon name="home" className="h-3.5 w-3.5" />
           <span className="hidden sm:inline">시점 초기화</span>
@@ -61,8 +74,9 @@ export function Studio({ onElement, compact }: { onElement: (el: HTMLDivElement 
           ['휠', '확대'],
           ['WASD', '이동'],
           ['Q/E', '높이'],
+          ['끌기', '인물·삼각대 이동'],
         ].map(([k, v]) => (
-          <span key={k} className="rounded bg-black/55 px-1.5 py-0.5 backdrop-blur">
+          <span key={k} className="rounded-full bg-black/55 px-2 py-0.5 backdrop-blur">
             <b className="font-mono text-ink">{k}</b> {v}
           </span>
         ))}
@@ -70,13 +84,13 @@ export function Studio({ onElement, compact }: { onElement: (el: HTMLDivElement 
 
       {compact && (
         <div className={cx('absolute flex flex-col items-end gap-1', miniWrap, expanded && 'items-center')}>
-          <div className={cx('relative overflow-hidden rounded-lg border border-accent/50 shadow-2xl', miniSize)}>
+          <div className={cx('relative overflow-hidden rounded-2xl border border-accent/60 shadow-2xl', miniSize)}>
             <ShotViewport showGrid={expanded} className="absolute inset-0" />
             <div className="absolute right-1 top-1 flex gap-1">
               <button
                 type="button"
                 onClick={() => setExpanded(!expanded)}
-                className="rounded bg-black/60 p-1 text-ink hover:text-accent"
+                className="rounded-full bg-black/60 p-1.5 text-ink hover:text-accent"
                 aria-label={expanded ? '촬영 미리보기 축소' : '촬영 미리보기 확대'}
               >
                 <Icon name={expanded ? 'shrink' : 'expand'} className="h-3.5 w-3.5" />

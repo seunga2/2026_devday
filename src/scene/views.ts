@@ -8,9 +8,9 @@ export const shotCamera = new PerspectiveCamera(42, 16 / 9, 0.05, 100)
 
 /** 탐색 카메라: 자유 시점. 기즈모 레이어 포함 */
 export const exploreCamera = new PerspectiveCamera(50, 1, 0.05, 200)
-exploreCamera.position.set(6.5, 5.2, 7.5)
+exploreCamera.position.set(8.5, 6, 9.5)
 exploreCamera.layers.enable(GIZMO_LAYER)
-export const EXPLORE_HOME = { position: [6.5, 5.2, 7.5] as const, target: [0, 1, -0.5] as const }
+export const EXPLORE_HOME = { position: [8.5, 6, 9.5] as const, target: [0, 1, -0.5] as const }
 
 /**
  * 단일 WebGL Canvas가 그릴 DOM 영역.

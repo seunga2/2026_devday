@@ -2,7 +2,7 @@ import { useThree } from '@react-three/fiber'
 import { useLayoutEffect, useRef } from 'react'
 import { BufferGeometry, Group, Mesh, MeshBasicMaterial, Object3D, SpotLight } from 'three'
 import { registerScene } from '../lib/capture'
-import { KEY_LIGHT_TARGET, lightRigState, type LightRigState, DEFAULT_LIGHTING } from '../lib/lighting'
+import { lightRigState, type LightRigState, DEFAULT_LIGHTING } from '../lib/lighting'
 import { GIZMO_LAYER } from './views'
 
 /** 키 라이트(조명 설정 반영) + 고정 보조광. 값은 렌더 루프에서 applyLightRig로 직접 갱신한다 */
@@ -15,7 +15,6 @@ export function LightingRig() {
   useLayoutEffect(() => {
     const light = key.current!
     const target = new Object3D()
-    target.position.set(...KEY_LIGHT_TARGET)
     scene.add(target)
     light.target = target
     gizmo.current?.traverse((o) => o.layers.set(GIZMO_LAYER))
@@ -24,6 +23,8 @@ export function LightingRig() {
     const apply = (s: LightRigState) => {
       current = s
       light.position.set(...s.keyPosition)
+      target.position.set(...s.keyTarget)
+      target.updateMatrixWorld()
       light.intensity = s.keyIntensity
       light.color.setRGB(...s.keyColor)
       bulb.current?.position.set(...s.keyPosition)
@@ -58,7 +59,7 @@ export function LightingRig() {
       {/* 탐색 화면 전용: 키 라이트 위치 표시 */}
       <group ref={gizmo}>
         <mesh ref={bulb}>
-          <sphereGeometry args={[0.12, 14, 10]} />
+          <sphereGeometry args={[0.08, 12, 8]} />
           <meshBasicMaterial color="#ffd27a" />
         </mesh>
       </group>

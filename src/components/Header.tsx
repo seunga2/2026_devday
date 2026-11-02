@@ -40,13 +40,13 @@ export function Header() {
         <span className="text-[17px] font-bold tracking-tight text-ink">
           scene<span className="font-light text-soft">preview</span>
         </span>
-        <span className="hidden rounded border border-accent/50 px-1.5 py-0.5 font-mono text-[9px] font-semibold tracking-[0.18em] text-accent sm:inline">STUDIO</span>
+        <span className="hidden rounded-full bg-block-mint px-2 py-0.5 font-mono text-[9px] font-medium tracking-[0.1em] text-black sm:inline">STUDIO</span>
       </div>
       <input
         value={projectName}
         onChange={(e) => setProjectName(e.target.value)}
         aria-label="프로젝트 이름"
-        className="hidden min-w-0 max-w-64 flex-1 rounded-md border border-transparent bg-transparent px-2 py-1 text-[13px] text-soft hover:border-line focus:border-accent/60 focus:text-ink focus:outline-none md:block"
+        className="hidden min-w-0 max-w-64 flex-1 rounded-full border border-transparent bg-transparent px-2 py-1 text-[13px] text-soft hover:border-line focus:border-accent/60 focus:text-ink focus:outline-none md:block"
       />
       <div className="ml-auto flex items-center gap-2">
         <span className={cx('hidden text-[11px] sm:inline', save.error ? 'text-red-300' : 'text-mute')} role="status">

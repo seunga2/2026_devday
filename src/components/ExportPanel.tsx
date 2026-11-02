@@ -33,37 +33,42 @@ export function ExportPanel() {
 
   return (
     <div className="grid gap-4 p-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-      <div className="space-y-3">
+      {/* 파스텔 색 블록: 밝은 면 위에서는 검정 알약이 주요 버튼 */}
+      <div className="space-y-4 rounded-3xl bg-block-lime p-5 text-black sm:p-6">
+        <div>
+          <div className="font-mono text-[10.5px] uppercase tracking-[0.08em] text-black/60">Export</div>
+          <h3 className="mt-1 text-[22px] font-light leading-tight tracking-[-0.02em]">영상 제작 자료 내보내기</h3>
+        </div>
         <div className="grid gap-2 sm:grid-cols-2">
-          <Button variant="primary" className="py-3" disabled={running} onClick={() => run('current')}>
+          <Button variant="block-primary" className="py-3" disabled={running} onClick={() => run('current')}>
             <Icon name="zip" /> 현재 CUT 내보내기
           </Button>
-          <Button className="py-3" disabled={running} onClick={() => run('all')}>
+          <Button variant="block-secondary" className="py-3" disabled={running} onClick={() => run('all')}>
             <Icon name="zip" /> 전체 CUT 내보내기 ({cutCount})
           </Button>
         </div>
-        <div className="min-h-[52px] rounded-lg border border-line bg-well px-3 py-2" aria-live="polite">
-          {state.kind === 'idle' && <p className="text-[12px] text-mute">시작·종료 프레임 PNG, 영상 프롬프트, 설정 JSON을 ZIP으로 저장합니다.</p>}
+        <div className="min-h-[52px] rounded-2xl bg-white/55 px-4 py-2.5" aria-live="polite">
+          {state.kind === 'idle' && <p className="text-[12px] text-black/70">시작·종료 프레임 PNG, 영상 프롬프트, 설정 JSON을 ZIP으로 저장합니다.</p>}
           {state.kind === 'running' && (
             <div className="space-y-1.5">
-              <div className="flex justify-between text-[12px] text-soft">
+              <div className="flex justify-between text-[12px] text-black/80">
                 <span>{state.progress.message}</span>
                 <span className="font-mono">{state.progress.percent}%</span>
               </div>
-              <div className="h-1.5 overflow-hidden rounded bg-black/40">
-                <div className="h-full bg-accent transition-[width]" style={{ width: `${state.progress.percent}%` }} />
+              <div className="h-1.5 overflow-hidden rounded-full bg-black/15">
+                <div className="h-full rounded-full bg-black transition-[width]" style={{ width: `${state.progress.percent}%` }} />
               </div>
             </div>
           )}
           {state.kind === 'done' && (
-            <p className="flex items-center gap-1.5 text-[12px] text-accent">
+            <p className="flex items-center gap-1.5 text-[12px] font-medium text-black">
               <Icon name="check" /> {state.file} 다운로드를 시작했습니다.
             </p>
           )}
-          {state.kind === 'error' && <p className={cx('text-[12px] text-red-300')}>내보내기 실패: {state.message}</p>}
+          {state.kind === 'error' && <p className={cx('text-[12px] font-medium text-red-700')}>내보내기 실패: {state.message}</p>}
         </div>
       </div>
-      <pre className="overflow-x-auto rounded-lg border border-line bg-well px-3 py-2 font-mono text-[11px] leading-relaxed text-soft">
+      <pre className="overflow-x-auto rounded-3xl border border-line bg-well px-3 py-2 font-mono text-[11px] leading-relaxed text-soft">
         {`scene-preview-export/
 ├─ cut-01/
 │  ├─ start-frame.png      모션 0% 시점 (UI 없이 촬영 화면만)

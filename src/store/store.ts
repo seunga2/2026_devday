@@ -1,11 +1,11 @@
 import { create } from 'zustand'
-import type { Aspect, CameraSettings, Cut, Duration, LightingPreset, LightingSettings, MotionType, Project } from '../types/scene'
-import { CAMERA_PRESETS, DEFAULT_CAMERA, clampCamera, type CameraPresetKey } from '../lib/camera'
+import type { Actor, Aspect, CameraSettings, Cut, Duration, Environment, LightingPreset, LightingSettings, MotionType, Project } from '../types/scene'
+import { CAMERA_PRESETS, DEFAULT_CAMERA, cameraFromGround, clampCamera, type CameraPresetKey } from '../lib/camera'
 import { DEFAULT_LIGHTING, applyLightingPreset, clampLighting } from '../lib/lighting'
 import { evaluateMotion, frameFromSettings } from '../lib/motion'
 import { loadProject, saveProject, type KeyValueStorage } from '../lib/persistence'
 import { playback } from '../lib/playback'
-import { createCut, createProject, cutName, newId } from '../lib/schema'
+import { MAX_ACTORS, clampActor, createActor, createCut, createProject, cutName, newId } from '../lib/schema'
 
 export type FrameSlot = 'start' | 'end'
 
@@ -14,6 +14,16 @@ interface Actions {
   setCamera(patch: Partial<CameraSettings>): void
   applyCameraPreset(key: CameraPresetKey): void
   resetCamera(): void
+  /** 3D 화면에서 삼각대를 끌어 옮김 (높이·시선 유지) */
+  moveCameraTo(x: number, z: number): void
+  setEnvironment(env: Environment): void
+  // 인물
+  addActor(): void
+  updateActor(id: string, patch: Partial<Omit<Actor, 'id'>>): void
+  removeActor(id: string): void
+  selectActor(id: string | null): void
+  /** 인물을 촬영 카메라의 피사체 기준점으로 지정 */
+  focusActor(id: string): void
   setLighting(patch: Partial<LightingSettings>): void
   applyLightingPreset(preset: LightingPreset): void
   setAspect(aspect: Aspect): void
@@ -38,7 +48,10 @@ interface Actions {
   replaceProject(p: Project): void
 }
 
-export interface StoreState extends Project, Actions {}
+export interface StoreState extends Project, Actions {
+  /** 화면 선택 상태 (저장하지 않음) */
+  selectedActorId: string | null
+}
 
 export const activeCut = (s: Pick<Project, 'cuts' | 'activeCutId'>): Cut => s.cuts.find((c) => c.id === s.activeCutId) ?? s.cuts[0]
 
@@ -51,13 +64,38 @@ export function createSceneStore(initial: Project = createProject()) {
 
     return {
       ...initial,
+      selectedActorId: null,
 
       setCamera: (patch) => {
         editMode()
         updateActive((c) => ({ camera: clampCamera({ ...c.camera, ...patch }) }))
       },
       applyCameraPreset: (key) => get().setCamera({ angle: CAMERA_PRESETS[key].angle }),
-      resetCamera: () => get().setCamera({ ...DEFAULT_CAMERA }),
+      // 초기 구도는 현재 피사체 기준점을 유지
+      resetCamera: () => get().setCamera({ ...DEFAULT_CAMERA, focus: activeCut(get()).camera.focus }),
+      moveCameraTo: (x, z) => get().setCamera(cameraFromGround(activeCut(get()).camera, x, z)),
+      setEnvironment: (environment) => updateActive(() => ({ environment })),
+
+      addActor: () => {
+        const cut = activeCut(get())
+        if (cut.actors.length >= MAX_ACTORS) return
+        // 기존 인물과 겹치지 않도록 옆에 배치
+        const i = cut.actors.length
+        const actor = createActor(i, { x: ((i % 2 ? 1 : -1) * Math.ceil(i / 2)) * 1.1, z: 0 })
+        updateActive((c) => ({ actors: [...c.actors, clampActor(actor)] }))
+        set({ selectedActorId: actor.id })
+      },
+      updateActor: (id, patch) =>
+        updateActive((c) => ({ actors: c.actors.map((a) => (a.id === id ? clampActor({ ...a, ...patch }) : a)) })),
+      removeActor: (id) => {
+        updateActive((c) => ({ actors: c.actors.filter((a) => a.id !== id) }))
+        if (get().selectedActorId === id) set({ selectedActorId: null })
+      },
+      selectActor: (selectedActorId) => set({ selectedActorId }),
+      focusActor: (id) => {
+        const a = activeCut(get()).actors.find((x) => x.id === id)
+        if (a) get().setCamera({ focus: [a.x, a.z] })
+      },
       setLighting: (patch) => {
         editMode()
         updateActive((c) => ({ lighting: clampLighting({ ...c.lighting, ...patch }) }))
@@ -107,7 +145,13 @@ export function createSceneStore(initial: Project = createProject()) {
         set((s) => {
           const base = activeCut(s)
           // 현재 카메라·조명 구도를 이어받아 새 장면을 시작
-          const cut = createCut(s.cuts.length, { camera: { ...base.camera }, lighting: { ...base.lighting }, aspect: base.aspect })
+          const cut = createCut(s.cuts.length, {
+            camera: { ...base.camera },
+            lighting: { ...base.lighting },
+            aspect: base.aspect,
+            environment: base.environment,
+            actors: base.actors.map((a) => ({ ...a, id: newId() })),
+          })
           return { cuts: [...s.cuts, cut], activeCutId: cut.id }
         })
       },
@@ -124,7 +168,7 @@ export function createSceneStore(initial: Project = createProject()) {
       selectCut: (id) => {
         if (!get().cuts.some((c) => c.id === id)) return
         editMode()
-        set({ activeCutId: id })
+        set({ activeCutId: id, selectedActorId: null })
         playback.setDuration(activeCut(get()).motion.duration)
       },
       renameCut: (id, name) => set((s) => ({ cuts: s.cuts.map((c) => (c.id === id ? { ...c, name } : c)) })),
@@ -146,7 +190,7 @@ export function createSceneStore(initial: Project = createProject()) {
       resetActiveCut: () => {
         editMode()
         updateActive((c) => ({
-          camera: { ...DEFAULT_CAMERA },
+          camera: { ...DEFAULT_CAMERA, focus: c.camera.focus },
           lighting: { ...DEFAULT_LIGHTING },
           aspect: '16:9',
           motion: { type: 'fixed', duration: 5, start: null, end: null },

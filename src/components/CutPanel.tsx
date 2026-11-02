@@ -16,12 +16,12 @@ function CutCard({ cut, index, active }: { cut: Cut; index: number; active: bool
 
   return (
     <li
-      className={cx('group flex gap-3 rounded-lg border p-2.5 transition-colors', active ? 'border-accent/60 bg-accent/[0.06]' : 'border-line bg-well hover:border-white/20')}
+      className={cx('group flex gap-3 rounded-2xl border p-2.5 transition-colors', active ? 'border-accent/60 bg-accent/[0.06]' : 'border-line bg-well hover:border-white/20')}
       data-testid="cut-card"
     >
-      <button type="button" onClick={() => select(cut.id)} className="relative h-[68px] w-[120px] shrink-0 overflow-hidden rounded-md bg-black/40 ring-1 ring-line" aria-label={`${cut.name} 선택`}>
+      <button type="button" onClick={() => select(cut.id)} className="relative h-[68px] w-[120px] shrink-0 overflow-hidden rounded-xl bg-black/40 ring-1 ring-line" aria-label={`${cut.name} 선택`}>
         {thumb && <img src={thumb} alt="" className="h-full w-full object-contain" />}
-        <span className="absolute left-1 top-1 rounded bg-black/70 px-1 font-mono text-[9px] text-accent">{String(index + 1).padStart(2, '0')}</span>
+        <span className="absolute left-1 top-1 rounded-full bg-black/70 px-1 font-mono text-[9px] text-accent">{String(index + 1).padStart(2, '0')}</span>
       </button>
       <div className="flex min-w-0 flex-1 flex-col justify-between gap-1">
         <input
@@ -29,7 +29,7 @@ function CutCard({ cut, index, active }: { cut: Cut; index: number; active: bool
           onChange={(e) => rename(cut.id, e.target.value)}
           onFocus={() => !active && select(cut.id)}
           aria-label="CUT 이름"
-          className="w-full rounded border border-transparent bg-transparent px-1 py-0.5 text-[13px] font-semibold text-ink hover:border-line focus:border-accent/60 focus:outline-none"
+          className="w-full rounded-lg border border-transparent bg-transparent px-1 py-0.5 text-[13px] font-semibold text-ink hover:border-line focus:border-accent/60 focus:outline-none"
         />
         <div className="truncate px-1 text-[11px] text-mute">
           {MOTION_TYPES[cut.motion.type].label} · {cut.motion.duration}s · {cut.aspect} · {LIGHTING_PRESETS[cut.lighting.preset].label}

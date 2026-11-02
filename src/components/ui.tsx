@@ -2,14 +2,44 @@ import { useId, type ButtonHTMLAttributes, type ReactNode } from 'react'
 
 export const cx = (...c: (string | false | null | undefined)[]) => c.filter(Boolean).join(' ')
 
-export function Panel({ title, index, right, children, className }: { title?: ReactNode; index?: string; right?: ReactNode; children: ReactNode; className?: string }) {
+export type BlockTone = 'lime' | 'lilac' | 'cream' | 'mint' | 'coral' | 'pink'
+
+export const blockBg: Record<BlockTone, string> = {
+  lime: 'bg-block-lime',
+  lilac: 'bg-block-lilac',
+  cream: 'bg-block-cream',
+  mint: 'bg-block-mint',
+  coral: 'bg-block-coral',
+  pink: 'bg-block-pink',
+}
+
+/** 파스텔 바탕 + 모노 대문자 라벨 (섹션 구분용) */
+export function Eyebrow({ tone, children }: { tone: BlockTone; children: ReactNode }) {
+  return <span className={cx('rounded-full px-2.5 py-1 font-mono text-[10px] font-medium uppercase leading-none tracking-[0.08em] text-black', blockBg[tone])}>{children}</span>
+}
+
+export function Panel({
+  title,
+  eyebrow,
+  tone = 'mint',
+  right,
+  children,
+  className,
+}: {
+  title?: ReactNode
+  eyebrow?: string
+  tone?: BlockTone
+  right?: ReactNode
+  children: ReactNode
+  className?: string
+}) {
   return (
-    <section className={cx('rounded-xl border border-line bg-panel', className)}>
+    <section className={cx('rounded-3xl border border-line bg-panel', className)}>
       {title && (
-        <header className="flex items-center justify-between gap-2 border-b border-line px-4 py-2.5">
-          <h2 className="flex items-center gap-2 text-[13px] font-semibold tracking-wide text-ink">
+        <header className="flex items-center justify-between gap-2 border-b border-line px-4 py-3">
+          <h2 className="flex items-center gap-2.5 whitespace-nowrap text-[14px] font-semibold tracking-[-0.01em] text-ink">
+            {eyebrow && <Eyebrow tone={tone}>{eyebrow}</Eyebrow>}
             {title}
-            {index && <span className="font-mono text-[11px] font-normal text-mute">{index}</span>}
           </h2>
           {right}
         </header>
@@ -20,7 +50,7 @@ export function Panel({ title, index, right, children, className }: { title?: Re
 }
 
 export function Label({ children }: { children: ReactNode }) {
-  return <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-mute">{children}</div>
+  return <div className="mb-1.5 font-mono text-[10.5px] font-medium uppercase tracking-[0.08em] text-mute">{children}</div>
 }
 
 export function Slider({
@@ -84,7 +114,7 @@ export function Segmented<T extends string | number>({
   ariaLabel: string
 }) {
   return (
-    <div role="radiogroup" aria-label={ariaLabel} className="flex rounded-lg border border-line bg-well p-0.5">
+    <div role="radiogroup" aria-label={ariaLabel} className="flex overflow-x-auto rounded-full border border-line bg-well p-0.5 [scrollbar-width:none]">
       {options.map((o) => (
         <button
           key={String(o.value)}
@@ -94,9 +124,10 @@ export function Segmented<T extends string | number>({
           title={o.title}
           onClick={() => onChange(o.value)}
           className={cx(
-            'flex-1 rounded-md font-medium transition-colors',
-            size === 'sm' ? 'px-2 py-1 text-[11px]' : 'px-2 py-1.5 text-[12px]',
-            value === o.value ? 'bg-accent/15 text-accent ring-1 ring-accent/40' : 'text-soft hover:bg-white/5 hover:text-ink',
+            'flex-1 whitespace-nowrap rounded-full font-medium transition-colors',
+            size === 'sm' ? 'px-2.5 py-1 text-[11px]' : 'px-2.5 py-1.5 text-[12px]',
+            // 선택 = 주요 버튼과 같은 면(흰 알약)
+            value === o.value ? 'bg-white text-black' : 'text-soft hover:bg-white/5 hover:text-ink',
           )}
         >
           {o.label}
@@ -106,18 +137,21 @@ export function Segmented<T extends string | number>({
   )
 }
 
-type Variant = 'primary' | 'ghost' | 'outline' | 'danger'
+// block-*: 파스텔 색 블록 위 버튼 (검정 = 주요, 흰색 = 보조)
+type Variant = 'primary' | 'ghost' | 'outline' | 'danger' | 'block-primary' | 'block-secondary'
 export function Button({ variant = 'outline', className, children, ...rest }: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: Variant }) {
   return (
     <button
       type="button"
       {...rest}
       className={cx(
-        'inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-40',
-        variant === 'primary' && 'bg-accent text-[#06201b] hover:bg-accent-strong',
-        variant === 'outline' && 'border border-line bg-well text-ink hover:border-accent/50 hover:text-accent',
+        'inline-flex items-center justify-center gap-1.5 rounded-full px-3.5 py-1.5 text-[12px] font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40',
+        variant === 'primary' && 'bg-white text-black hover:bg-accent',
+        variant === 'outline' && 'border border-line bg-well text-ink hover:border-white/40 hover:bg-white/5',
         variant === 'ghost' && 'text-soft hover:bg-white/5 hover:text-ink',
         variant === 'danger' && 'border border-red-500/30 text-red-300 hover:bg-red-500/10',
+        variant === 'block-primary' && 'bg-black text-white hover:bg-black/80',
+        variant === 'block-secondary' && 'bg-white text-black hover:bg-white/70',
         className,
       )}
     >

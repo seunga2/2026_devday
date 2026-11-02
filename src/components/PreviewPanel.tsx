@@ -5,7 +5,7 @@ import { playback } from '../lib/playback'
 import { viewTargets } from '../scene/views'
 import { activeCut, useActiveCut, useStore } from '../store/store'
 import { currentShotPose, usePlaybackStatus } from './hooks'
-import { Button, Icon, Segmented, cx } from './ui'
+import { Button, Eyebrow, Icon, Segmented, cx } from './ui'
 
 /** 촬영 카메라 화면이 그려질 DOM 영역을 등록 */
 export function ShotViewport({ className, showGrid }: { className?: string; showGrid: boolean }) {
@@ -42,7 +42,7 @@ function ModeBadge() {
   useEffect(() => playback.onProgress((p) => pct.current && (pct.current.textContent = `${Math.round(p * 100)}%`)), [])
   const motion = status !== 'idle'
   return (
-    <div className={cx('absolute left-2 top-2 flex items-center gap-1.5 rounded px-1.5 py-0.5 font-mono text-[10px] font-semibold tracking-wider', motion ? 'bg-amber-400/90 text-black' : 'bg-black/55 text-accent')}>
+    <div className={cx('absolute left-2 top-2 flex items-center gap-1.5 rounded-full px-2 py-0.5 font-mono text-[10px] font-semibold tracking-wider', motion ? 'bg-amber-400/90 text-black' : 'bg-black/55 text-accent')}>
       <span className={cx('h-1.5 w-1.5 rounded-full', motion ? 'bg-black' : 'animate-pulse bg-accent')} />
       {motion ? 'MOTION' : 'LIVE'}
       <span ref={pct} className={motion ? '' : 'hidden'} />
@@ -108,10 +108,10 @@ export function PreviewPanel() {
   const [grid, setGrid] = useState(true)
   const snap = useSnapshot()
   return (
-    <section className="flex min-h-0 flex-col overflow-hidden rounded-xl border border-line">
+    <section className="flex min-h-0 flex-col overflow-hidden rounded-3xl border border-line">
       <header className="flex items-center justify-between gap-2 border-b border-line bg-panel px-3 py-2">
-        <h2 className="flex items-center gap-2 text-[13px] font-semibold text-ink">
-          <Icon name="film" className="h-4 w-4 text-accent" /> 촬영 미리보기
+        <h2 className="flex shrink-0 items-center gap-2 whitespace-nowrap text-[13px] font-semibold text-ink">
+          <Eyebrow tone="mint">Preview</Eyebrow> 촬영 미리보기
         </h2>
         <div className="flex items-center gap-1.5">
           <AspectToggle />

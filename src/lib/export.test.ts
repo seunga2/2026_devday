@@ -66,7 +66,7 @@ describe('ZIP 내보내기', () => {
     expect(await zip.file('scene-preview-export/cut-02/video-prompt.txt')!.async('string')).toBe('USER EDITED PROMPT\n')
     expect(await zip.file('scene-preview-export/cut-01/video-prompt.txt')!.async('string')).toMatch(/dolly in/)
     const json = JSON.parse(await zip.file('scene-preview-export/cut-01/scene-settings.json')!.async('string'))
-    expect(json).toMatchObject({ schemaVersion: 3, cut: { name: '오프닝' }, motion: { type: 'dolly', duration: 3, startFrameSaved: true } })
+    expect(json).toMatchObject({ schemaVersion: 4, cut: { name: '오프닝' }, motion: { type: 'dolly', duration: 3, startFrameSaved: true } })
     expect(await zip.file('scene-preview-export/README.txt')!.async('string')).toMatch(/cut-02/)
   })
 

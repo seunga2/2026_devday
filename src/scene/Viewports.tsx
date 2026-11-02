@@ -16,6 +16,7 @@ import { evaluateMotion, poseFromSettings } from '../lib/motion'
 import { playback } from '../lib/playback'
 import { activeCut, useStore } from '../store/store'
 import { CameraGizmo } from './CameraRig'
+import { DragControls } from './DragControls'
 import { LightingRig } from './LightingRig'
 import { Studio3D } from './Studio3D'
 import { EXPLORE_HOME, exploreCamera, shotCamera, viewTargets } from './views'
@@ -70,7 +71,7 @@ function RenderLoop({ keys }: { keys: React.RefObject<Set<string>> }) {
     shotCamera.aspect = aspect
     shotCamera.updateProjectionMatrix()
     shotCamera.updateMatrixWorld()
-    getSceneHandle()?.applyLightRig(lightRigState(pose.lighting, motionPose?.lightColor))
+    getSceneHandle()?.applyLightRig(lightRigState(pose.lighting, motionPose?.lightColor, [pose.target[0], pose.target[2]]))
     gizmo.current?.sync()
 
     // 2) 탐색 카메라 키보드 이동 (뷰포트 포커스 시에만 keys가 채워짐)
@@ -195,6 +196,14 @@ function ExploreControls({ el }: { el: HTMLElement }) {
   )
 }
 
+/** 활성 CUT의 배경·인물만 구독 (카메라·조명 변경 시 씬 리렌더 없음) */
+function SceneContent() {
+  const environment = useStore((s) => activeCut(s).environment)
+  const actors = useStore((s) => activeCut(s).actors)
+  const selected = useStore((s) => s.selectedActorId)
+  return <Studio3D environment={environment} actors={actors} selectedActorId={selected} />
+}
+
 export function Viewports({ exploreEl }: { exploreEl: HTMLElement | null }) {
   const [lost, setLost] = useState(false)
   useExploreInput(exploreEl, exploreKeys)
@@ -215,10 +224,11 @@ export function Viewports({ exploreEl }: { exploreEl: HTMLElement | null }) {
         }}
         style={{ pointerEvents: 'none' }}
       >
-        <Studio3D />
+        <SceneContent />
         <LightingRig />
         <RenderLoop keys={exploreKeys} />
         {exploreEl && <ExploreControls el={exploreEl} />}
+        {exploreEl && <DragControls el={exploreEl} />}
       </Canvas>
     </div>
   )

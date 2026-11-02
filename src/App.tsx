@@ -4,6 +4,7 @@ import { CutPanel } from './components/CutPanel'
 import { ExportPanel } from './components/ExportPanel'
 import { Header } from './components/Header'
 import { useMediaQuery } from './components/hooks'
+import { ActorPanel } from './components/ActorPanel'
 import { LightingPanel } from './components/LightingPanel'
 import { MotionPanel } from './components/MotionPanel'
 import { PreviewPanel } from './components/PreviewPanel'
@@ -15,11 +16,13 @@ import { useStore } from './store/store'
 
 function SettingsPanel({ className }: { className?: string }) {
   return (
-    <Panel title="촬영 설정" right={<span className="text-[11px] text-accent">실시간 반영</span>} className={cx('flex flex-col', className)}>
+    <Panel title="촬영 설정" eyebrow="Settings" tone="lime" right={<span className="font-mono text-[10px] uppercase tracking-[0.08em] text-mute">실시간 반영</span>} className={cx('flex flex-col', className)}>
       <div className="min-h-0 flex-1 space-y-5 overflow-y-auto p-3.5">
         <CameraControls />
         <div className="border-t border-line" />
         <LightingPanel />
+        <div className="border-t border-line" />
+        <ActorPanel />
       </div>
     </Panel>
   )
@@ -36,8 +39,8 @@ function BottomTabs() {
   const [tab, setTab] = useState<TabKey>('cuts')
   const count = useStore((s) => s.cuts.length)
   return (
-    <section className="rounded-xl border border-line bg-panel">
-      <div role="tablist" className="flex gap-1 border-b border-line px-2 pt-2">
+    <section className="rounded-3xl border border-line bg-panel">
+      <div role="tablist" className="flex gap-1 border-b border-line px-3 py-2.5">
         {TABS.map((t) => (
           <button
             key={t.key}
@@ -46,12 +49,12 @@ function BottomTabs() {
             aria-selected={tab === t.key}
             onClick={() => setTab(t.key)}
             className={cx(
-              '-mb-px rounded-t-md border-b-2 px-3.5 py-2 text-[13px] font-semibold transition-colors',
-              tab === t.key ? 'border-accent text-accent' : 'border-transparent text-soft hover:text-ink',
+              'rounded-full px-4 py-1.5 text-[13px] font-medium transition-colors',
+              tab === t.key ? 'bg-white text-black' : 'text-soft hover:bg-white/5 hover:text-ink',
             )}
           >
             {t.label}
-            {t.key === 'cuts' && <span className="ml-1.5 rounded bg-white/10 px-1.5 font-mono text-[10px]">{count}</span>}
+            {t.key === 'cuts' && <span className="ml-1.5 rounded-full bg-block-lime px-1.5 font-mono text-[10px] font-medium text-black">{count}</span>}
           </button>
         ))}
       </div>

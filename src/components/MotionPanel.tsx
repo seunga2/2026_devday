@@ -19,18 +19,18 @@ function FrameCard({ slot }: { slot: FrameSlot }) {
   const auto = !isStart && !saved && cut.motion.start && cut.motion.type !== 'fixed'
 
   return (
-    <div className="flex min-w-0 flex-1 gap-3 rounded-lg border border-line bg-well p-2.5">
-      <div className={cx('relative shrink-0 overflow-hidden rounded-md bg-black/40 ring-1 ring-line', cut.aspect === '9:16' ? 'h-24 w-[54px]' : 'h-[68px] w-[120px]')}>
+    <div className="flex min-w-0 flex-1 gap-3 rounded-2xl border border-line bg-well p-2.5">
+      <div className={cx('relative shrink-0 overflow-hidden rounded-xl bg-black/40 ring-1 ring-line', cut.aspect === '9:16' ? 'h-24 w-[54px]' : 'h-[68px] w-[120px]')}>
         {thumb ? (
           <img src={thumb} alt={`${isStart ? '시작' : '종료'} 프레임 썸네일`} className="h-full w-full object-cover" />
         ) : (
           <div className="flex h-full items-center justify-center text-[10px] text-mute">{pose ? '렌더링…' : '없음'}</div>
         )}
-        <span className="absolute bottom-0.5 left-0.5 rounded bg-black/70 px-1 font-mono text-[9px] text-ink">{isStart ? '0%' : '100%'}</span>
+        <span className="absolute bottom-0.5 left-0.5 rounded-full bg-black/70 px-1 font-mono text-[9px] text-ink">{isStart ? '0%' : '100%'}</span>
       </div>
       <div className="flex min-w-0 flex-1 flex-col justify-between gap-1.5">
         <div>
-          <div className="font-mono text-[11px] font-semibold tracking-[0.14em] text-accent">{isStart ? 'START FRAME' : 'END FRAME'}</div>
+          <div className="font-mono text-[11px] font-medium uppercase tracking-[0.08em] text-accent">{isStart ? 'START FRAME' : 'END FRAME'}</div>
           <div className="truncate text-[11px] text-mute">
             {saved ? `저장됨 · FOV ${Math.round(saved.fov)}°` : auto ? `자동 계산 (${MOTION_TYPES[cut.motion.type].label})` : isStart ? '현재 구도를 시작점으로 저장하세요' : cut.motion.type === 'fixed' ? '고정 촬영: 시작과 동일' : '시작 프레임을 먼저 저장하세요'}
           </div>
@@ -98,14 +98,16 @@ export function MotionPanel() {
 
   return (
     <Panel
-      title={<span className="font-mono tracking-[0.18em] text-accent">CAMERA MOTION</span>}
+      title="카메라 움직임 설계"
+      eyebrow="Camera Motion"
+      tone="lilac"
       right={
-        <span className={cx('rounded px-2 py-0.5 text-[11px] font-semibold', status === 'idle' ? 'bg-accent/10 text-accent' : 'bg-amber-400/15 text-amber-300')}>
+        <span className={cx('rounded-full px-2.5 py-0.5 text-[11px] font-medium', status === 'idle' ? 'bg-accent/10 text-accent' : 'bg-amber-400/15 text-amber-300')}>
           {status === 'idle' ? '카메라 편집 모드' : status === 'playing' ? '모션 재생 중' : '모션 미리보기'}
         </span>
       }
     >
-      <div className="grid gap-3 p-3 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,1.4fr)]">
+      <div className="grid grid-cols-1 gap-3 p-3 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,1.4fr)]">
         <div className="space-y-2.5">
           <Segmented<MotionType>
             ariaLabel="카메라 움직임"

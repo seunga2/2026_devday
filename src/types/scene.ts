@@ -5,8 +5,21 @@ export type Tone = 'warm' | 'neutral' | 'cool'
 export type Aspect = '16:9' | '9:16'
 export type MotionType = 'fixed' | 'dolly' | 'truck' | 'pedestal' | 'orbit'
 export type Duration = 3 | 5 | 8
+export type Environment = 'indoor' | 'outdoor'
 
-/** 피사체(원점) 기준 촬영 카메라 구도 */
+/** 장면 속 인물. 바닥(XZ) 위치와 바라보는 방향 */
+export interface Actor {
+  id: string
+  name: string
+  x: number
+  z: number
+  /** 바라보는 방향 (deg, 0 = +z) */
+  rotation: number
+  /** ACTOR_OUTFITS 인덱스 */
+  outfit: number
+}
+
+/** 피사체 기준점(focus) 기준 촬영 카메라 구도 */
 export interface CameraSettings {
   /** 피사체와의 수평 거리 (m) */
   distance: number
@@ -18,6 +31,8 @@ export interface CameraSettings {
   targetHeight: number
   /** 수직 화각 (deg) */
   fov: number
+  /** 피사체 기준점 바닥 좌표 [x, z] — 카메라가 이 점을 중심으로 회전·거리 계산 */
+  focus: [number, number]
 }
 
 export interface LightingSettings {
@@ -58,6 +73,8 @@ export interface Cut {
   camera: CameraSettings
   lighting: LightingSettings
   aspect: Aspect
+  environment: Environment
+  actors: Actor[]
   motion: MotionSettings
   /** 인물 행동 */
   action: string
@@ -67,7 +84,7 @@ export interface Cut {
   updatedAt: number
 }
 
-export const PROJECT_VERSION = 3
+export const PROJECT_VERSION = 4
 
 export interface Project {
   version: typeof PROJECT_VERSION

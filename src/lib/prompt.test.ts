@@ -56,6 +56,18 @@ describe('영상 프롬프트 생성 (규칙 기반)', () => {
     expect(describeMood('어둡고 긴장감 있는')).toBe('tense, suspenseful, dark, moody')
   })
 
+  it('촬영 공간과 인물 수를 반영', () => {
+    const cut = createCut(0)
+    expect(generatePrompt(cut)).toMatch(/of a person in a cozy, contemporary living room/)
+    const two = { ...cut, environment: 'outdoor' as const, actors: [...cut.actors, { ...cut.actors[0], id: 'b' }] }
+    const p = generatePrompt(two)
+    expect(p).toMatch(/of two people in a quiet urban park/)
+    expect(p).toMatch(/The main subject looks toward the camera/)
+    const empty = generatePrompt({ ...cut, actors: [] })
+    expect(empty).toMatch(/an empty scene with no people/)
+    expect(empty).not.toMatch(/The subject/)
+  })
+
   it('사용자가 수정한 프롬프트는 자동 생성으로 덮어쓰지 않는다', () => {
     const cut = createCut(0, { prompt: { text: 'Custom prompt', edited: true } })
     expect(effectivePrompt(cut)).toBe('Custom prompt')

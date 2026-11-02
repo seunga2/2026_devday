@@ -1,6 +1,6 @@
 import { z } from 'zod'
-import { PROJECT_VERSION, type Cut, type Project } from '../types/scene'
-import { DEFAULT_CAMERA, clampCamera } from './camera'
+import { PROJECT_VERSION, type Actor, type Cut, type Project } from '../types/scene'
+import { DEFAULT_CAMERA, STAGE_LIMIT, clamp, clampCamera, wrapAngle } from './camera'
 import { DEFAULT_LIGHTING, LIGHTING_PRESETS, clampLighting } from './lighting'
 import { isValidFrame } from './motion'
 
@@ -18,6 +18,8 @@ export const cameraSchema = z.object({
   angle: finite,
   targetHeight: finite,
   fov: finite,
+  // v4 추가: v3 데이터는 원점 기준
+  focus: z.tuple([finite, finite]).default([0, 0]),
 })
 
 export const lightingSchema = z.object({
@@ -35,12 +37,24 @@ export const frameSchema = z.object({
   aspect: aspectSchema,
 })
 
+export const actorSchema = z.object({
+  id: z.string().min(1),
+  name: z.string(),
+  x: finite,
+  z: finite,
+  rotation: finite,
+  outfit: z.number().int().nonnegative(),
+})
+
 export const cutSchema = z.object({
   id: z.string().min(1),
   name: z.string(),
   camera: cameraSchema,
   lighting: lightingSchema,
   aspect: aspectSchema,
+  // v4 추가 필드 (v3 → 기본값으로 마이그레이션)
+  environment: z.enum(['indoor', 'outdoor']).default('indoor'),
+  actors: z.array(actorSchema).max(12).optional(),
   motion: z.object({
     type: motionTypeSchema,
     duration: durationSchema,
@@ -62,6 +76,32 @@ export const newId = () =>
 
 export const cutName = (index: number) => `CUT ${String(index + 1).padStart(2, '0')}`
 
+export const MAX_ACTORS = 6
+
+/** 인물 의상 팔레트 */
+export const ACTOR_OUTFITS = [
+  { label: '아이보리', top: '#e8dcc8', bottom: '#26282d', hair: '#3a2a20', skin: '#e3b593' },
+  { label: '네이비', top: '#2f4a68', bottom: '#c9b79c', hair: '#16110d', skin: '#c99272' },
+  { label: '테라코타', top: '#b5573b', bottom: '#3b3f46', hair: '#5a3a24', skin: '#efc3a2' },
+  { label: '세이지', top: '#8aa37f', bottom: '#4a4038', hair: '#201812', skin: '#d6a37f' },
+  { label: '블랙', top: '#24262a', bottom: '#24262a', hair: '#0f0c0a', skin: '#e9be9c' },
+  { label: '라벤더', top: '#a993d9', bottom: '#e9e4da', hair: '#6b4a2e', skin: '#f0caa8' },
+] as const
+
+export function createActor(index: number, partial: Partial<Actor> = {}): Actor {
+  return { id: newId(), name: `인물 ${index + 1}`, x: 0, z: 0, rotation: 0, outfit: index % ACTOR_OUTFITS.length, ...partial }
+}
+
+export function clampActor(a: Actor): Actor {
+  return {
+    ...a,
+    x: clamp(a.x, -STAGE_LIMIT, STAGE_LIMIT),
+    z: clamp(a.z, -STAGE_LIMIT, STAGE_LIMIT),
+    rotation: wrapAngle(a.rotation),
+    outfit: Math.min(ACTOR_OUTFITS.length - 1, Math.max(0, Math.round(a.outfit))),
+  }
+}
+
 export function createCut(index: number, partial: Partial<Cut> = {}): Cut {
   return {
     id: newId(),
@@ -69,6 +109,8 @@ export function createCut(index: number, partial: Partial<Cut> = {}): Cut {
     camera: { ...DEFAULT_CAMERA },
     lighting: { ...DEFAULT_LIGHTING },
     aspect: '16:9',
+    environment: 'indoor',
+    actors: [createActor(0)],
     motion: { type: 'fixed', duration: 5, start: null, end: null },
     action: '인물이 카메라를 바라보며 천천히 미소 짓는다.',
     mood: '따뜻하고 영화 같은 분위기',
@@ -90,13 +132,16 @@ function sanitizeCut(cut: Cut): Cut {
     start: isValidFrame(cut.motion.start) ? cut.motion.start : null,
     end: isValidFrame(cut.motion.end) ? cut.motion.end : null,
   }
-  return { ...cut, camera: clampCamera(cut.camera), lighting: clampLighting(cut.lighting), motion }
+  return { ...cut, camera: clampCamera(cut.camera), lighting: clampLighting(cut.lighting), actors: cut.actors.map(clampActor), motion }
 }
 
 function finalize(projectName: unknown, rawCuts: unknown[], activeId: unknown): Project {
   const cuts = rawCuts.flatMap((c) => {
     const r = cutSchema.safeParse(c)
-    return r.success ? [sanitizeCut(r.data as Cut)] : []
+    if (!r.success) return []
+    // v3 이하: 인물 정보가 없으면 원점에 기본 인물 1명
+    const actors = r.data.actors ?? [createActor(0)]
+    return [sanitizeCut({ ...r.data, actors } as Cut)]
   })
   if (cuts.length === 0) return createProject()
   const active = cuts.some((c) => c.id === activeId) ? (activeId as string) : cuts[0].id
@@ -160,6 +205,7 @@ function legacyCut(src: { id?: unknown; name?: unknown; shot?: unknown; motion?:
       angle: num(shot.angle, DEFAULT_CAMERA.angle),
       targetHeight: num(shot.targetHeight, DEFAULT_CAMERA.targetHeight),
       fov: num(shot.fov, DEFAULT_CAMERA.fov),
+      focus: [0, 0],
     }),
     lighting: legacyLighting(shot),
     aspect: oneOf(shot.aspect, ['16:9', '9:16'] as const, '16:9'),
@@ -189,7 +235,8 @@ export function migrateLegacy(raw: unknown): Project {
 /** 저장된 원시 데이터를 현재 버전 Project로 변환. 알 수 없는 형식이면 기본 프로젝트 */
 export function migrateProject(raw: unknown): Project {
   if (!isRec(raw)) return createProject()
-  if (raw.version === PROJECT_VERSION && Array.isArray(raw.cuts)) return finalize(raw.projectName, raw.cuts, raw.activeCutId)
+  // v3(배경·인물·피사체 기준점 없음)은 스키마 기본값으로 v4가 된다
+  if ((raw.version === PROJECT_VERSION || raw.version === 3) && Array.isArray(raw.cuts)) return finalize(raw.projectName, raw.cuts, raw.activeCutId)
   if (isRec(raw.state) || 'shot' in raw) return migrateLegacy(raw)
   return createProject()
 }

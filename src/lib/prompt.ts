@@ -157,6 +157,18 @@ function motionSentence(cut: Cut): string {
   return `The camera performs ${movement} over ${motion.duration} seconds with eased acceleration, starting on a ${framing(start)} and ending on a ${framing(end)}.`
 }
 
+const SETTINGS: Record<Cut['environment'], string> = {
+  indoor: 'a cozy, contemporary living room with a large window, a bookshelf and warm practical lamps',
+  outdoor: 'a quiet urban park with trees, benches and city buildings in the distance',
+}
+
+const NUMBER_WORDS = ['no one', 'a person', 'two people', 'three people', 'four people', 'five people', 'six people']
+
+/** 인물 수 표현 (0명이면 빈 공간 촬영) */
+export function subjectPhrase(count: number): string {
+  return NUMBER_WORDS[count] ?? `${count} people`
+}
+
 export function generatePrompt(cut: Cut): string {
   const camera: CameraSettings = cut.camera
   const start = cut.motion.start ?? frameFromSettings(camera, cut.lighting, cut.aspect)
@@ -169,13 +181,17 @@ export function generatePrompt(cut: Cut): string {
   const orientation = cut.aspect === '9:16' ? 'vertical 9:16' : 'horizontal 16:9'
 
   return [
-    `A ${framing(start)} of a person in a cozy, contemporary living-room studio, shot on a ${lensDescription(start.fov)}.`,
-    `The subject ${describeAction(cut.action)}.`,
+    cut.actors.length === 0
+      ? `A ${framing(start)} of ${SETTINGS[cut.environment]}, an empty scene with no people, shot on a ${lensDescription(start.fov)}.`
+      : `A ${framing(start)} of ${subjectPhrase(cut.actors.length)} in ${SETTINGS[cut.environment]}, shot on a ${lensDescription(start.fov)}.`,
+    cut.actors.length === 0 ? '' : `${cut.actors.length > 1 ? 'The main subject' : 'The subject'} ${describeAction(cut.action)}.`,
     motionSentence(cut),
     `Lighting: ${lightingPhrase(lighting)}.${lightChange}`,
     `Mood: ${describeMood(cut.mood)} atmosphere.`,
     `${orientation} framing, realistic materials, soft natural shadows, subtle film grain, consistent character appearance. No text, subtitles or watermarks.`,
-  ].join(' ')
+  ]
+    .filter(Boolean)
+    .join(' ')
 }
 
 /** 표시·내보내기용 최종 프롬프트: 사용자 수정본 우선 */

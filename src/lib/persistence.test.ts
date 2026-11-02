@@ -40,14 +40,16 @@ describe('저장·복원 및 마이그레이션', () => {
     expect(project).toEqual(p)
   })
 
-  it('기존(Codex) 저장 데이터를 v3로 마이그레이션', () => {
+  it('기존(Codex) 저장 데이터를 현재 버전으로 마이그레이션', () => {
     const { project, source } = loadProject(memory({ [LEGACY_STORAGE_KEY]: JSON.stringify(legacy) }))
     expect(source).toBe('legacy')
     expect(project.version).toBe(PROJECT_VERSION)
     expect(project.projectName).toBe('Old project')
     expect(project.activeCutId).toBe('a1')
     const cut = project.cuts.find((c) => c.id === 'a1')!
-    expect(cut.camera).toEqual({ distance: 4.2, height: 1.8, angle: 90, targetHeight: 1.3, fov: 35 })
+    expect(cut.camera).toEqual({ distance: 4.2, height: 1.8, angle: 90, targetHeight: 1.3, fov: 35, focus: [0, 0] })
+    expect(cut.environment).toBe('indoor')
+    expect(cut.actors).toHaveLength(1)
     expect(cut.lighting).toEqual({ preset: 'side', intensity: 5, direction: 90, tone: 'cool' })
     expect(cut.aspect).toBe('9:16')
     expect(cut.motion.type).toBe('dolly')
@@ -78,6 +80,26 @@ describe('저장·복원 및 마이그레이션', () => {
     const p = migrateProject({ state: { shot: legacyShot, motion: legacy.state.motion, cuts: [], selectedId: null }, version: 0 })
     expect(p.cuts).toHaveLength(1)
     expect(p.cuts[0].motion.end).toBeNull()
+  })
+
+  it('v3 데이터(배경·인물·기준점 없음)는 기본값을 채워 v4로 변환', () => {
+    const p = createProject()
+    const { environment: _e, actors: _a, ...v3cut } = p.cuts[0]
+    const { focus: _f, ...v3camera } = v3cut.camera
+    const r = migrateProject({ ...p, version: 3, cuts: [{ ...v3cut, camera: v3camera }] })
+    expect(r.version).toBe(PROJECT_VERSION)
+    expect(r.cuts[0].camera.focus).toEqual([0, 0])
+    expect(r.cuts[0].environment).toBe('indoor')
+    expect(r.cuts[0].actors).toHaveLength(1)
+    expect(r.cuts[0].actors[0]).toMatchObject({ x: 0, z: 0, rotation: 0 })
+    expect(r.cuts[0].id).toBe(p.cuts[0].id)
+  })
+
+  it('인물 위치·방향은 무대 범위로 보정', () => {
+    const p = createProject()
+    p.cuts[0].actors = [{ id: 'a', name: 'A', x: 50, z: -50, rotation: 400, outfit: 99 }]
+    const a = migrateProject(p).cuts[0].actors[0]
+    expect(a).toMatchObject({ x: 6.5, z: -6.5, rotation: 40, outfit: 5 })
   })
 
   it('손상된 JSON·알 수 없는 형식은 기본 프로젝트', () => {

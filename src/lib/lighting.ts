@@ -39,15 +39,15 @@ export function clampLighting(l: LightingSettings): LightingSettings {
   }
 }
 
-/** 키 라이트의 월드 좌표 (피사체 원점 기준 구면 좌표) */
-export function keyLightPosition(l: LightingSettings): Vec3 {
+/** 키 라이트의 월드 좌표 (피사체 기준점 center=[x,z] 기준 구면 좌표) */
+export function keyLightPosition(l: LightingSettings, center: [number, number] = [0, 0]): Vec3 {
   const az = toRad(l.direction)
   const el = toRad(LIGHTING_PRESETS[l.preset].elevation)
   const r = KEY_LIGHT_RADIUS
-  return [Math.sin(az) * Math.cos(el) * r, KEY_TARGET_HEIGHT + Math.sin(el) * r, Math.cos(az) * Math.cos(el) * r]
+  return [center[0] + Math.sin(az) * Math.cos(el) * r, KEY_TARGET_HEIGHT + Math.sin(el) * r, center[1] + Math.cos(az) * Math.cos(el) * r]
 }
 
-export const KEY_LIGHT_TARGET: Vec3 = [0, KEY_TARGET_HEIGHT, 0]
+export const keyLightTarget = (center: [number, number] = [0, 0]): Vec3 => [center[0], KEY_TARGET_HEIGHT, center[1]]
 
 /** 0~1 RGB */
 export function hexToRgb(hex: string): Vec3 {
@@ -69,13 +69,15 @@ export function mixToneColor(a: Tone, b: Tone, t: number): Vec3 {
 /** 렌더러에 적용할 실제 라이트 값 */
 export interface LightRigState {
   keyPosition: Vec3
+  keyTarget: Vec3
   keyIntensity: number
   keyColor: Vec3
 }
 
-export function lightRigState(l: LightingSettings, color?: Vec3): LightRigState {
+export function lightRigState(l: LightingSettings, color?: Vec3, center?: [number, number]): LightRigState {
   return {
-    keyPosition: keyLightPosition(l),
+    keyPosition: keyLightPosition(l, center),
+    keyTarget: keyLightTarget(center),
     // 감쇠 없는(decay 0) 스포트라이트 기준 UI 밝기 → three.js intensity 보정
     keyIntensity: l.intensity * 0.6,
     keyColor: color ?? toneColor(l.tone),

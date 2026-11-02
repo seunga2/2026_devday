@@ -1,16 +1,25 @@
 @import 'tailwindcss';
 
+/* 다크 작업 화면 + DESIGN.md(Figma 분석)의 흑백 코어·파스텔 블록·알약 버튼 혼합 */
 @theme {
-  --color-bg: #0b0c0e;
-  --color-panel: #131619;
-  --color-well: #191d21;
-  --color-line: #262b31;
-  --color-ink: #e8ecef;
-  --color-soft: #a3acb5;
-  --color-mute: #6c7680;
-  --color-accent: #2fd3b4;
-  --color-accent-strong: #5ae6cb;
-  --font-sans: 'Pretendard', 'Inter', system-ui, -apple-system, 'Segoe UI', 'Malgun Gothic', sans-serif;
+  --color-bg: #0a0a0a;
+  --color-panel: #141414;
+  --color-well: #1c1c1c;
+  --color-line: #2a2a2a;
+  --color-ink: #ffffff;
+  --color-soft: #c4c4c0;
+  --color-mute: #85857f;
+  /* 포인트: block-mint */
+  --color-accent: #c8e6cd;
+  --color-accent-strong: #e1f3e4;
+  /* 파스텔 색 블록 */
+  --color-block-lime: #dceeb1;
+  --color-block-lilac: #c5b0f4;
+  --color-block-cream: #f4ecd6;
+  --color-block-mint: #c8e6cd;
+  --color-block-coral: #f3c9b6;
+  --color-block-pink: #efd4d4;
+  --font-sans: 'Inter', 'Pretendard', system-ui, -apple-system, 'Segoe UI', 'Malgun Gothic', sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, 'Cascadia Code', Consolas, monospace;
 }
 
@@ -35,12 +44,12 @@ body {
 .range::-webkit-slider-runnable-track {
   height: 4px;
   border-radius: 4px;
-  background: linear-gradient(to right, var(--color-accent) var(--pct), #2c3238 var(--pct));
+  background: linear-gradient(to right, var(--color-accent) var(--pct), #333333 var(--pct));
 }
 .range::-moz-range-track {
   height: 4px;
   border-radius: 4px;
-  background: #2c3238;
+  background: #333333;
 }
 .range::-moz-range-progress {
   height: 4px;
@@ -53,15 +62,15 @@ body {
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: #e9fffa;
+  background: #ffffff;
   border: 3px solid var(--color-accent);
-  box-shadow: 0 0 0 3px rgb(47 211 180 / 0.15);
+  box-shadow: 0 0 0 3px rgb(200 230 205 / 0.15);
 }
 .range::-moz-range-thumb {
   width: 12px;
   height: 12px;
   border-radius: 50%;
-  background: #e9fffa;
+  background: #ffffff;
   border: 3px solid var(--color-accent);
 }
 .range:disabled {
@@ -69,10 +78,10 @@ body {
   cursor: not-allowed;
 }
 .range:focus-visible {
-  outline: 2px solid rgb(47 211 180 / 0.6);
+  outline: 2px solid rgb(200 230 205 / 0.6);
   outline-offset: 2px;
   border-radius: 4px;
 }
 [data-testid='explore-viewport']:focus-visible {
-  box-shadow: inset 0 0 0 2px rgb(47 211 180 / 0.6);
+  box-shadow: inset 0 0 0 2px rgb(200 230 205 / 0.6);
 }

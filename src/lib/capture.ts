@@ -50,7 +50,8 @@ export type CaptureFn = (pose: ShotPose, aspect: Aspect, opts?: CaptureOptions) 
 export function withPoseLighting<T>(h: Pick<SceneHandle, 'applyLightRig' | 'currentLightRig'>, pose: ShotPose, color: Vec3 | undefined, render: () => T): T {
   const previous = h.currentLightRig()
   try {
-    h.applyLightRig(lightRigState(pose.lighting, color))
+    // 조명은 시선 지점(피사체 기준점)을 중심으로 배치
+    h.applyLightRig(lightRigState(pose.lighting, color, [pose.target[0], pose.target[2]]))
     return render()
   } finally {
     h.applyLightRig(previous)
